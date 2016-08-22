@@ -1,0 +1,26 @@
+group 'room-manager'
+version '1.0-SNAPSHOT'
+
+apply plugin: 'java'
+
+repositories {
+    mavenCentral()
+}
+
+ext {
+    jeromq = '0.3.5'
+    junit = '4.12'
+    jackson = '2.7.4'
+    logback = '1.1.7'
+    slf4 = '1.7.21'
+}
+
+dependencies {
+    compile "org.zeromq:jeromq:$jeromq"
+    compile "com.fasterxml.jackson.core:jackson-databind:$jackson"
+
+    compile "org.slf4j:jcl-over-slf4j:$slf4"
+    compile "ch.qos.logback:logback-classic:$logback"
+    
+    testCompile "junit:junit:$junit"
+}

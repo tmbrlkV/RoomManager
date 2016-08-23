@@ -1,6 +1,7 @@
 package com.manager.util.entity;
 
 
+import com.chat.util.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

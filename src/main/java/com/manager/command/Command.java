@@ -1,6 +1,7 @@
 package com.manager.command;
 
-import com.manager.util.entity.User;
+
+import com.chat.util.entity.User;
 
 @FunctionalInterface
 public interface Command {

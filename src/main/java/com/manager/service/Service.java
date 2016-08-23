@@ -1,9 +1,9 @@
 package com.manager.service;
 
+import com.chat.util.entity.User;
+import com.chat.util.json.JsonObjectFactory;
+import com.chat.util.json.JsonProtocol;
 import com.manager.command.Command;
-import com.manager.util.entity.User;
-import com.manager.util.json.JsonObjectFactory;
-import com.manager.util.json.JsonProtocol;
 import org.zeromq.ZMQ;
 
 import java.util.HashMap;

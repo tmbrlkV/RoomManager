@@ -1,10 +1,9 @@
 package com.manager.service;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.manager.command.Command;
 import com.manager.util.entity.User;
-import com.manager.util.json.JsonObject;
 import com.manager.util.json.JsonObjectFactory;
+import com.manager.util.json.JsonProtocol;
 import org.zeromq.ZMQ;
 
 import java.util.HashMap;
@@ -35,24 +34,20 @@ public class Service {
 
             while (!Thread.currentThread().isInterrupted()) {
                 String request = responder.recvStr();
-                Optional<JsonObject> objectFromJson = Optional.ofNullable(JsonObjectFactory
-                        .getObjectFromJson(request, JsonObject.class));
-                String command = objectFromJson.map(JsonObject::getCommand).orElse("");
+                Optional<JsonProtocol<User>> objectFromJson = Optional.ofNullable(JsonObjectFactory
+                        .getObjectFromJson(request, JsonProtocol.class));
+                String command = objectFromJson.map(JsonProtocol::getCommand).orElse("");
                 Command method = commands.getOrDefault(command, (user, id) -> -1L);
 
-                long requestTo = Long.parseLong(objectFromJson.map(JsonObject::getTo).orElse("0"));
-                User user = objectFromJson.map(JsonObject::getUser).orElseGet(User::new);
+                long requestTo = Long.parseLong(objectFromJson.map(JsonProtocol::getTo).orElse("0"));
+                User user = objectFromJson.map(JsonProtocol::getAttachment).orElseGet(User::new);
                 long roomId = method.execute(user, requestTo);
 
-                JsonObject reply = new JsonObject(TO_USER, user);
+                JsonProtocol<User> reply = new JsonProtocol<>(TO_USER, user);
                 reply.setFrom(String.valueOf(roomId));
                 reply.setTo(String.valueOf(user.getId()));
 
-                try {
-                    responder.send(JsonObjectFactory.getJsonString(reply));
-                } catch (JsonProcessingException e) {
-                    responder.send("");
-                }
+                responder.send(JsonObjectFactory.getJsonString(reply));
             }
         }
     }

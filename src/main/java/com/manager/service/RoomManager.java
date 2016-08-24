@@ -1,7 +1,7 @@
 package com.manager.service;
 
+import com.chat.util.entity.User;
 import com.manager.util.entity.Room;
-import com.manager.util.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,13 +19,17 @@ public class RoomManager {
     public Room createRoom() {
         Room room = new Room(Instant.now().getEpochSecond());
         rooms.add(room);
-        logger.debug("Room size: {}.", rooms.size());
+        logger.debug("Rooms size: {}.", rooms.size());
         return room;
     }
 
-    public Room createRoom(long roomId) {
+    public Room createLobby(long roomId) {
+        if (roomId <= 0L) {
+            return createRoom();
+        }
         Room room = new Room(roomId);
         rooms.add(room);
+        logger.debug("Rooms size: {}.", rooms.size());
         return room;
     }
 

@@ -1,8 +1,9 @@
 package com.manager;
 
-import com.manager.util.entity.User;
-import com.manager.util.json.JsonObject;
-import com.manager.util.json.JsonObjectFactory;
+
+import com.chat.util.entity.User;
+import com.chat.util.json.JsonObjectFactory;
+import com.chat.util.json.JsonProtocol;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,32 +26,34 @@ public class ServiceTest {
 
     @Test
     public void testCreateCommand() throws Exception {
-        JsonObject objectFromJson = createRoom();
+        JsonProtocol objectFromJson = createRoom();
         assertNotNull(objectFromJson);
         assertEquals("toUser", objectFromJson.getCommand());
         assertTrue(Long.parseLong(objectFromJson.getFrom()) > 0L);
     }
 
-    private JsonObject createRoom() throws com.fasterxml.jackson.core.JsonProcessingException {
-        JsonObject createRoom = new JsonObject("createRoom", user);
+    private JsonProtocol createRoom() throws com.fasterxml.jackson.core.JsonProcessingException {
+        JsonProtocol createRoom = new JsonProtocol<>("createLobby", user);
+        createRoom.setFrom(String.valueOf(user.getId()));
+        createRoom.setTo("roomManager:2357");
         requester.send(JsonObjectFactory.getJsonString(createRoom));
         String response = requester.recvStr();
-        return JsonObjectFactory.getObjectFromJson(response, JsonObject.class);
+        return JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
     }
 
     @Test
     public void testRemoveCommand() throws Exception {
-        JsonObject jsonCreatedRoom = createRoom();
+        JsonProtocol jsonCreatedRoom = createRoom();
         assertNotNull(jsonCreatedRoom);
 
-        JsonObject jsonObject = new JsonObject("removeRoom", user);
-        jsonObject.setTo(jsonCreatedRoom.getFrom());
-        jsonObject.setFrom(String.valueOf(user.getId()));
+        JsonProtocol jsonProtocol = new JsonProtocol<>("removeRoom", user);
+        jsonProtocol.setTo("roomManager:" + jsonCreatedRoom.getFrom());
+        jsonProtocol.setFrom(String.valueOf(user.getId()));
 
-        requester.send(JsonObjectFactory.getJsonString(jsonObject));
+        requester.send(JsonObjectFactory.getJsonString(jsonProtocol));
 
         String deleteRoomString = requester.recvStr();
-        JsonObject jsonDeletedRoom = JsonObjectFactory.getObjectFromJson(deleteRoomString, JsonObject.class);
+        JsonProtocol jsonDeletedRoom = JsonObjectFactory.getObjectFromJson(deleteRoomString, JsonProtocol.class);
         assertNotNull(jsonDeletedRoom);
         assertEquals("toUser", jsonDeletedRoom.getCommand());
         assertEquals(jsonCreatedRoom.getFrom(), jsonDeletedRoom.getFrom());
@@ -59,7 +62,7 @@ public class ServiceTest {
 
     @Test
     public void testAddRemoveUserCommand() throws Exception {
-        JsonObject jsonCreatedRoom = createRoom();
+        JsonProtocol jsonCreatedRoom = createRoom();
         assertNotNull(jsonCreatedRoom);
 
         User userPek = new User(2, "pek", "pek");
@@ -69,31 +72,31 @@ public class ServiceTest {
 
     }
 
-    private void updateUser(JsonObject jsonCreatedRoom, User userPek, String command) throws com.fasterxml.jackson.core.JsonProcessingException {
-        JsonObject jsonObject = new JsonObject(command, userPek);
-        jsonObject.setTo(jsonCreatedRoom.getFrom());
-        jsonObject.setFrom(String.valueOf(userPek.getId()));
+    private void updateUser(JsonProtocol jsonCreatedRoom, User userPek, String command) throws com.fasterxml.jackson.core.JsonProcessingException {
+        JsonProtocol jsonProtocol = new JsonProtocol<>(command, userPek);
+        jsonProtocol.setTo("roomManager:" + jsonCreatedRoom.getFrom());
+        jsonProtocol.setFrom(String.valueOf(userPek.getId()));
 
-        requester.send(JsonObjectFactory.getJsonString(jsonObject));
+        requester.send(JsonObjectFactory.getJsonString(jsonProtocol));
         String response = requester.recvStr();
 
-        JsonObject jsonAddedUser = JsonObjectFactory.getObjectFromJson(response, JsonObject.class);
-        assertNotNull(jsonAddedUser);
-        assertEquals("toUser", jsonAddedUser.getCommand());
-        assertEquals(userPek.getId(), jsonAddedUser.getUser().getId());
-        assertEquals(userPek.getId(), Integer.parseInt(jsonAddedUser.getTo()));
-        assertEquals(jsonCreatedRoom.getFrom(), jsonAddedUser.getFrom());
+        JsonProtocol<User> fromJson = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
+        assertNotNull(fromJson);
+        assertEquals("toUser", fromJson.getCommand());
+        assertEquals(userPek.getId(), fromJson.getAttachment().getId());
+        assertEquals(userPek.getId(), Integer.parseInt(fromJson.getTo()));
+        assertEquals(jsonCreatedRoom.getFrom(), fromJson.getFrom());
     }
 
     @Test
     public void testBadCommand() throws Exception {
         User user = new User();
-        JsonObject jsonObject = new JsonObject("poop", user);
-        jsonObject.setTo(null);
-        requester.send(JsonObjectFactory.getJsonString(jsonObject));
+        JsonProtocol jsonProtocol = new JsonProtocol<>("poop", user);
+        jsonProtocol.setTo(null);
+        requester.send(JsonObjectFactory.getJsonString(jsonProtocol));
 
         String response = requester.recvStr();
-        JsonObject objectFromJson = JsonObjectFactory.getObjectFromJson(response, JsonObject.class);
+        JsonProtocol objectFromJson = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
         assertNotNull(objectFromJson);
         assertEquals(user.getId(), Integer.parseInt(objectFromJson.getTo()));
         assertEquals(-1L, Integer.parseInt(objectFromJson.getFrom()));

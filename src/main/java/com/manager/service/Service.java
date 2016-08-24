@@ -4,15 +4,22 @@ import com.chat.util.entity.User;
 import com.chat.util.json.JsonObjectFactory;
 import com.chat.util.json.JsonProtocol;
 import com.manager.command.Command;
+import com.manager.util.entity.Room;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.zeromq.ZMQ;
 
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.manager.command.Command.*;
 
 public class Service {
+    private static final Logger logger = LoggerFactory.getLogger(Service.class);
+    private static Pattern pattern = Pattern.compile("([a-zA-Z]+)(:(\\d+)){0,2}");
     private static RoomManager roomManager = new RoomManager();
     private static Map<String, Command> commands = new HashMap<String, Command>() {{
         put(CREATE_ROOM, (user, id) -> {
@@ -26,22 +33,43 @@ public class Service {
         put(DEFAULT, (user, id) -> -1L);
     }};
 
+    private static long getRoomId(String keyTo) {
+        Matcher matcher = pattern.matcher(keyTo);
+        if (matcher.matches()) {
+            logger.debug("Matcher: {}", matcher);
+            String group = matcher.group(3);
+            logger.debug("Group: {}", group);
+            if (group != null) {
+                return Long.parseLong(group);
+            }
+        }
+        return 0L;
+    }
+
+    private static Room initLobby() {
+        return roomManager.createLobby(15000);
+    }
 
     public static void main(String[] args) {
         try (ZMQ.Context context = ZMQ.context(1)) {
             ZMQ.Socket responder = context.socket(ZMQ.REP);
             responder.bind("tcp://*:16000");
+            Room lobby = initLobby();
+            System.out.println(lobby);
 
             while (!Thread.currentThread().isInterrupted()) {
                 String request = responder.recvStr();
+                logger.debug("Request: {}", request);
                 Optional<JsonProtocol<User>> objectFromJson = Optional.ofNullable(JsonObjectFactory
                         .getObjectFromJson(request, JsonProtocol.class));
                 String command = objectFromJson.map(JsonProtocol::getCommand).orElse("");
+                logger.debug("Command: {}", command);
                 Command method = commands.getOrDefault(command, (user, id) -> -1L);
 
-                long requestTo = Long.parseLong(objectFromJson.map(JsonProtocol::getTo).orElse("0"));
+                String requestTo = objectFromJson.map(JsonProtocol::getTo).orElse("0");
+                logger.debug("RequestTo: {}", requestTo);
                 User user = objectFromJson.map(JsonProtocol::getAttachment).orElseGet(User::new);
-                long roomId = method.execute(user, requestTo);
+                long roomId = method.execute(user, getRoomId(requestTo));
 
                 JsonProtocol<User> reply = new JsonProtocol<>(TO_USER, user);
                 reply.setFrom(String.valueOf(roomId));

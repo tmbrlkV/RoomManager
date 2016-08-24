@@ -27,6 +27,7 @@ public class Room {
             user.setPassword("");
             users.add(user);
             logger.debug("User {}, {} added.", user.getId(), user.getLogin());
+            logger.debug("{}", this);
             return true;
         }
         return false;
@@ -54,5 +55,13 @@ public class Room {
     @Override
     public int hashCode() {
         return (int) (id ^ (id >>> 32));
+    }
+
+    @Override
+    public String toString() {
+        return "Room{" +
+                "id=" + id +
+                ", users=" + users +
+                '}';
     }
 }

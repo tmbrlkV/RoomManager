@@ -75,7 +75,7 @@ public class Service {
                 reply.setFrom(String.valueOf(roomId));
                 reply.setTo(String.valueOf(user.getId()));
 
-                responder.send(JsonObjectFactory.getJsonString(reply));
+                responder.send(reply.toString());
             }
         }
     }

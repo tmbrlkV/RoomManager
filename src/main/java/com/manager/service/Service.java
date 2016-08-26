@@ -55,9 +55,10 @@ public class Service {
             ZMQ.Socket responder = context.socket(ZMQ.REP);
             responder.bind("tcp://*:16000");
             Room lobby = initLobby();
-            System.out.println(lobby);
+            logger.debug("Lobby initialized: {}", lobby);
 
             while (!Thread.currentThread().isInterrupted()) {
+                logger.debug("Start");
                 String request = responder.recvStr();
                 logger.debug("Request: {}", request);
                 Optional<JsonProtocol<User>> objectFromJson = Optional.ofNullable(JsonObjectFactory
@@ -76,6 +77,7 @@ public class Service {
                 reply.setTo(String.valueOf(user.getId()));
 
                 responder.send(reply.toString());
+                logger.debug("Send {}", reply);
             }
         }
     }

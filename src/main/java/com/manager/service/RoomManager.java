@@ -6,16 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 public class RoomManager {
     private static final Logger logger = LoggerFactory.getLogger(RoomManager.class);
 
-    private List<Room> rooms = new ArrayList<>();
-    private List<User> users = new ArrayList<>();
+    private List<Room> rooms = new LinkedList<>();
+    private List<User> users = new LinkedList<>();
     private static Room lobby;
 
     public Room createRoom(User user) {
@@ -47,6 +44,7 @@ public class RoomManager {
     public Room removeRoom(long roomId) {
         Optional<Room> foundRoom = findRoom(roomId);
         foundRoom.map(rooms::remove).orElse(false);
+        logger.debug("Found room {}", foundRoom);
         return foundRoom.orElse(new Room(-1L));
     }
 
@@ -66,25 +64,29 @@ public class RoomManager {
         Optional<Room> foundRoom = findRoom(roomId);
         foundRoom.map(room -> room.removeUser(user)).orElse(false);
         Room room = foundRoom.orElse(new Room(-1L));
-//        if (room.getUsers().isEmpty()) {
-//            room = removeRoom(room.getId());
-//        }
+        if (!room.equals(lobby) && room.getUsers().isEmpty()) {
+            room = removeRoom(room.getId());
+            logger.debug("Room {} was removed.", room);
+        }
         return room;
     }
 
     public Room removeUserFromAllRooms(User user) {
-        rooms.stream().forEach(room -> {
-            logger.debug("Try to remove from {}", room);
+        logger.debug("Rooms size {}", rooms.size());
+        rooms.forEach(room -> {
+            logger.debug("Try to remove {} from {}", room, rooms);
             if (room.getUsers().contains(user)) {
                 removeUserFromRoom(user, room.getId());
                 logger.debug("User {} was removed from {}", user, room);
             }
         });
 
+        users.remove(user);
+        logger.debug("Rooms {}", rooms);
         return lobby;
     }
 
     private Optional<Room> findRoom(long roomId) {
-        return rooms.stream().filter(room -> room.getId() == roomId).findFirst();
+        return rooms.parallelStream().filter(room -> room.getId() == roomId).findFirst();
     }
 }

@@ -121,7 +121,6 @@ public class ServiceTest {
         assertEquals(15000L, Integer.parseInt(objectFromJson.getFrom()));
     }
 
-
     @After
     public void clear() {
         requester.close();

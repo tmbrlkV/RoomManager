@@ -70,6 +70,7 @@ public class Service {
                 String requestTo = objectFromJson.map(JsonProtocol::getTo).orElse("0");
                 logger.debug("RequestTo: {}", requestTo);
                 User user = objectFromJson.map(JsonProtocol::getAttachment).orElseGet(User::new);
+                logger.debug("Before execute");
                 long roomId = method.execute(user, getRoomId(requestTo));
 
                 JsonProtocol<User> reply = new JsonProtocol<>(TO_USER, user);

@@ -23,13 +23,16 @@ public class Room {
     }
 
     public boolean addUser(User user) {
+        logger.debug("Trying to add {}", user);
+        user.setPassword("");
         if (!users.contains(user)) {
-            user.setPassword("");
+            logger.debug("Before adding {}", user);
             users.add(user);
             logger.debug("User {}, {} added.", user.getId(), user.getLogin());
             logger.debug("{}", this);
             return true;
         }
+        logger.debug("User {} already exists.", user);
         return false;
     }
 

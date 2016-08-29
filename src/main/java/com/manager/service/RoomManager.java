@@ -46,6 +46,7 @@ public class RoomManager {
     public Room addUserToRoom(User user, long roomId) {
         Optional<Room> foundRoom = findRoom(roomId);
         foundRoom.map(room -> room.addUser(user)).orElse(false);
+        logger.debug("Found room: {}", foundRoom);
         return foundRoom.orElse(new Room(-1L));
     }
 

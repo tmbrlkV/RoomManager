@@ -23,13 +23,15 @@ public class Service {
     private static RoomManager roomManager = new RoomManager();
     private static Map<String, Command> commands = new HashMap<String, Command>() {{
         put(CREATE_ROOM, (user, id) -> {
-            long roomId = roomManager.createRoom().getId();
+            long roomId = roomManager.createRoom(user).getId();
+            logger.debug("***ROOM_ID {}***",roomId);
             roomManager.addUserToRoom(user, roomId);
             return roomId;
         });
         put(REMOVE_ROOM, (user, id) -> roomManager.removeRoom(id).getId());
         put(ADD_USER_TO_ROOM, (user, id) -> roomManager.addUserToRoom(user, id).getId());
         put(REMOVE_USER_FROM_ROOM, (user, id) -> roomManager.removeUserFromRoom(user, id).getId());
+        put(REMOVE_USER_FROM_ALL_ROOMS, (user, id) -> roomManager.removeUserFromAllRooms(user).getId());
         put(DEFAULT, (user, id) -> -1L);
     }};
 

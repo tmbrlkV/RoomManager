@@ -21,7 +21,7 @@ public class ServiceTest {
         context = ZMQ.context(1);
         requester = context.socket(ZMQ.REQ);
         requester.connect("tcp://localhost:16000");
-        user = new User(1, "kek", "kek");
+        user = new User(1, "kek", "");
     }
 
     @Test
@@ -33,9 +33,9 @@ public class ServiceTest {
     }
 
     private JsonProtocol createRoom() throws com.fasterxml.jackson.core.JsonProcessingException {
-        JsonProtocol createRoom = new JsonProtocol<>("createLobby", user);
+        JsonProtocol createRoom = new JsonProtocol<>("createRoom", user);
         createRoom.setFrom(String.valueOf(user.getId()));
-        createRoom.setTo("roomManager:2357");
+        createRoom.setTo("roomManager");
         requester.send(JsonObjectFactory.getJsonString(createRoom));
         String response = requester.recvStr();
         return JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
@@ -102,6 +102,24 @@ public class ServiceTest {
         assertEquals(-1L, Integer.parseInt(objectFromJson.getFrom()));
     }
 
+    @Test
+    public void testRemoveUserFromAllRooms() throws Exception {
+        JsonProtocol jsonCreatedRoom = createRoom();
+        updateUser(jsonCreatedRoom, user, "addUserToRoom");
+        jsonCreatedRoom = createRoom();
+        updateUser(jsonCreatedRoom, user, "addUserToRoom");
+
+        JsonProtocol jsonProtocol = new JsonProtocol<>("removeUserFromAllRooms", user);
+        jsonProtocol.setFrom(String.valueOf(user.getId()));
+        jsonProtocol.setTo("roomManager:15000");
+
+        requester.send(jsonProtocol.toString());
+        String response = requester.recvStr();
+        JsonProtocol objectFromJson = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
+        assertNotNull(objectFromJson);
+        assertEquals(user.getId(), Integer.parseInt(objectFromJson.getTo()));
+        assertEquals(15000L, Integer.parseInt(objectFromJson.getFrom()));
+    }
 
     @After
     public void clear() {

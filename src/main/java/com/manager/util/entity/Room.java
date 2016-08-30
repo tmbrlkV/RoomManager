@@ -24,7 +24,6 @@ public class Room {
 
     public boolean addUser(User user) {
         logger.debug("Trying to add {}", user);
-        user.setPassword("");
         if (!users.contains(user)) {
             logger.debug("Before adding {}", user);
             users.add(user);

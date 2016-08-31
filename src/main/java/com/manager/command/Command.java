@@ -13,6 +13,7 @@ public interface Command {
     String ADD_USER_TO_ROOM = "addUserToRoom";
     String REMOVE_USER_FROM_ROOM = "removeUserFromRoom";
     String REMOVE_USER_FROM_ALL_ROOMS = "removeUserFromAllRooms";
+    String GET_ALL_ROOMS = "getAllRooms";
     String TO_USER = "toUser";
     String DEFAULT = "";
 }

@@ -9,6 +9,8 @@ import org.junit.Before;
 import org.junit.Test;
 import org.zeromq.ZMQ;
 
+import java.util.Arrays;
+
 import static org.junit.Assert.*;
 
 public class ServiceTest {
@@ -29,7 +31,7 @@ public class ServiceTest {
         JsonProtocol objectFromJson = createRoom();
         assertNotNull(objectFromJson);
         assertEquals("toUser", objectFromJson.getCommand());
-        assertTrue(Long.parseLong(objectFromJson.getFrom()) > 0L);
+        assertEquals("roomManager", objectFromJson.getFrom());
     }
 
     private JsonProtocol createRoom() throws com.fasterxml.jackson.core.JsonProcessingException {
@@ -80,10 +82,9 @@ public class ServiceTest {
         requester.send(JsonObjectFactory.getJsonString(jsonProtocol));
         String response = requester.recvStr();
 
-        JsonProtocol<User> fromJson = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
+        JsonProtocol fromJson = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
         assertNotNull(fromJson);
         assertEquals("toUser", fromJson.getCommand());
-        assertEquals(userPek.getId(), fromJson.getAttachment().getId());
         assertEquals(userPek.getId(), Integer.parseInt(fromJson.getTo()));
         assertEquals(jsonCreatedRoom.getFrom(), fromJson.getFrom());
     }
@@ -99,7 +100,7 @@ public class ServiceTest {
         JsonProtocol objectFromJson = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
         assertNotNull(objectFromJson);
         assertEquals(user.getId(), Integer.parseInt(objectFromJson.getTo()));
-        assertEquals(-1L, Integer.parseInt(objectFromJson.getFrom()));
+        assertEquals("roomManager", objectFromJson.getFrom());
     }
 
     @Test
@@ -118,7 +119,23 @@ public class ServiceTest {
         JsonProtocol objectFromJson = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
         assertNotNull(objectFromJson);
         assertEquals(user.getId(), Integer.parseInt(objectFromJson.getTo()));
-        assertEquals(15000L, Integer.parseInt(objectFromJson.getFrom()));
+        assertEquals("roomManager", objectFromJson.getFrom());
+    }
+
+    @Test
+    public void testGetAllRooms() throws Exception {
+        JsonProtocol<User> jsonProtocol = new JsonProtocol<>("getAllRooms", user);
+        jsonProtocol.setFrom(String.valueOf(user.getId()));
+        jsonProtocol.setTo("roomManager:15000");
+
+        requester.send(jsonProtocol.toString());
+        String response = requester.recvStr();
+        JsonProtocol protocol = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
+
+        assertEquals(user.getId(), Integer.parseInt(protocol.getTo()));
+        System.out.println(Arrays.toString((Long[]) protocol.getAttachment()));
+        assertTrue(((Long[]) protocol.getAttachment()).length >= 1);
+
     }
 
     @After

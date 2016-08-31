@@ -32,6 +32,7 @@ public class Service {
         put(ADD_USER_TO_ROOM, (user, id) -> new Long[]{roomManager.addUserToRoom(user, id).getId()});
         put(REMOVE_USER_FROM_ROOM, (user, id) -> new Long[]{roomManager.removeUserFromRoom(user, id).getId()});
         put(REMOVE_USER_FROM_ALL_ROOMS, (user, id) -> new Long[]{roomManager.removeUserFromAllRooms(user).getId()});
+        put(GET_ALL_ROOMS, (user, id) -> roomManager.getRooms().stream().map(Room::getId).toArray(Long[]::new));
         put(DEFAULT, (user, id) -> new Long[]{-1L});
     }};
 

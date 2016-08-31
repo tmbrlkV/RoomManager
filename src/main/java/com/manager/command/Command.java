@@ -6,7 +6,7 @@ import com.chat.util.entity.User;
 @FunctionalInterface
 public interface Command {
 
-    long execute(User user, long roomId);
+    Long[] execute(User user, long roomId);
 
     String CREATE_ROOM = "createRoom";
     String REMOVE_ROOM = "removeRoom";

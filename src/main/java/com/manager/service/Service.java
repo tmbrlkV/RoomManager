@@ -79,7 +79,7 @@ public class Service {
                 Long[] roomId = method.execute(user, getRoomId(requestTo));
 
                 JsonProtocol<Long[]> reply = new JsonProtocol<>(TO_USER, roomId);
-                reply.setFrom("roomManager:" + roomId[0]);
+                reply.setFrom(objectFromJson.map(JsonProtocol::getTo).orElse("0"));
                 reply.setTo(String.valueOf(user.getId()));
 
                 responder.send(reply.toString());

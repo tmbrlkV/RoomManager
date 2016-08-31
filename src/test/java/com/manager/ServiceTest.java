@@ -6,7 +6,6 @@ import com.chat.util.json.JsonObjectFactory;
 import com.chat.util.json.JsonProtocol;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.zeromq.ZMQ;
 
@@ -40,7 +39,10 @@ public class ServiceTest {
         createRoom.setTo("roomManager");
         requester.send(JsonObjectFactory.getJsonString(createRoom));
         String response = requester.recvStr();
-        return JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
+        JsonProtocol<Long[]> objectFromJson = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
+        objectFromJson.setFrom(String.valueOf(objectFromJson.getAttachment()[0]));
+        objectFromJson.setTo(String.valueOf(user.getId()));
+        return objectFromJson;
     }
 
     @Test
@@ -76,7 +78,7 @@ public class ServiceTest {
 
     private void updateUser(JsonProtocol jsonCreatedRoom, User userPek, String command) throws com.fasterxml.jackson.core.JsonProcessingException {
         JsonProtocol jsonProtocol = new JsonProtocol<>(command, userPek);
-        jsonProtocol.setTo(jsonCreatedRoom.getFrom());
+        jsonProtocol.setTo("roomManager:" + jsonCreatedRoom.getFrom());
         jsonProtocol.setFrom(String.valueOf(userPek.getId()));
 
         requester.send(JsonObjectFactory.getJsonString(jsonProtocol));
@@ -86,7 +88,7 @@ public class ServiceTest {
         assertNotNull(fromJson);
         assertEquals("toUser", fromJson.getCommand());
         assertEquals(userPek.getId(), Integer.parseInt(fromJson.getTo()));
-        assertEquals(jsonCreatedRoom.getFrom(), fromJson.getFrom());
+        assertEquals(jsonProtocol.getTo(), fromJson.getFrom());
     }
 
     @Test
@@ -100,7 +102,7 @@ public class ServiceTest {
         JsonProtocol objectFromJson = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
         assertNotNull(objectFromJson);
         assertEquals(user.getId(), Integer.parseInt(objectFromJson.getTo()));
-        assertEquals("roomManager:-1", objectFromJson.getFrom());
+        assertEquals("0", objectFromJson.getFrom());
     }
 
     @Test
@@ -148,7 +150,7 @@ public class ServiceTest {
 
         JsonProtocol<User> jsonProtocol = new JsonProtocol<>("getAllUsers", user);
         jsonProtocol.setFrom(String.valueOf(user.getId()));
-        jsonProtocol.setTo(jsonCreatedRoom.getFrom());
+        jsonProtocol.setTo("roomManager");
 
         requester.send(jsonProtocol.toString());
         String response = requester.recvStr();

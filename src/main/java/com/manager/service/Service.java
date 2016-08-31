@@ -19,20 +19,20 @@ import static com.manager.command.Command.*;
 
 public class Service {
     private static final Logger logger = LoggerFactory.getLogger(Service.class);
-    private static Pattern pattern = Pattern.compile("([a-zA-Z]+)(:(\\d+)){0,2}");
+    private static Pattern pattern = Pattern.compile("([a-zA-Z]+:?)((\\d+):?){0,2}");
     private static RoomManager roomManager = new RoomManager();
     private static Map<String, Command> commands = new HashMap<String, Command>() {{
         put(CREATE_ROOM, (user, id) -> {
             long roomId = roomManager.createRoom(user).getId();
-            logger.debug("***ROOM_ID {}***",roomId);
+            logger.debug("***ROOM_ID {}***", roomId);
             roomManager.addUserToRoom(user, roomId);
-            return roomId;
+            return new Long[]{roomId};
         });
-        put(REMOVE_ROOM, (user, id) -> roomManager.removeRoom(id).getId());
-        put(ADD_USER_TO_ROOM, (user, id) -> roomManager.addUserToRoom(user, id).getId());
-        put(REMOVE_USER_FROM_ROOM, (user, id) -> roomManager.removeUserFromRoom(user, id).getId());
-        put(REMOVE_USER_FROM_ALL_ROOMS, (user, id) -> roomManager.removeUserFromAllRooms(user).getId());
-        put(DEFAULT, (user, id) -> -1L);
+        put(REMOVE_ROOM, (user, id) -> new Long[]{roomManager.removeRoom(id).getId()});
+        put(ADD_USER_TO_ROOM, (user, id) -> new Long[]{roomManager.addUserToRoom(user, id).getId()});
+        put(REMOVE_USER_FROM_ROOM, (user, id) -> new Long[]{roomManager.removeUserFromRoom(user, id).getId()});
+        put(REMOVE_USER_FROM_ALL_ROOMS, (user, id) -> new Long[]{roomManager.removeUserFromAllRooms(user).getId()});
+        put(DEFAULT, (user, id) -> new Long[]{-1L});
     }};
 
     private static long getRoomId(String keyTo) {
@@ -67,16 +67,16 @@ public class Service {
                         .getObjectFromJson(request, JsonProtocol.class));
                 String command = objectFromJson.map(JsonProtocol::getCommand).orElse("");
                 logger.debug("Command: {}", command);
-                Command method = commands.getOrDefault(command, (user, id) -> -1L);
+                Command method = commands.getOrDefault(command, (user, id) -> new Long[]{-1L});
 
                 String requestTo = objectFromJson.map(JsonProtocol::getTo).orElse("0");
                 logger.debug("RequestTo: {}", requestTo);
                 User user = objectFromJson.map(JsonProtocol::getAttachment).orElseGet(User::new);
                 logger.debug("Before execute");
-                long roomId = method.execute(user, getRoomId(requestTo));
+                Long[] roomId = method.execute(user, getRoomId(requestTo));
 
-                JsonProtocol<User> reply = new JsonProtocol<>(TO_USER, user);
-                reply.setFrom(String.valueOf(roomId));
+                JsonProtocol<Long[]> reply = new JsonProtocol<>(TO_USER, roomId);
+                reply.setFrom("roomManager");
                 reply.setTo(String.valueOf(user.getId()));
 
                 responder.send(reply.toString());

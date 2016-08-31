@@ -33,6 +33,8 @@ public class Service {
         put(REMOVE_USER_FROM_ROOM, (user, id) -> new Long[]{roomManager.removeUserFromRoom(user, id).getId()});
         put(REMOVE_USER_FROM_ALL_ROOMS, (user, id) -> new Long[]{roomManager.removeUserFromAllRooms(user).getId()});
         put(GET_ALL_ROOMS, (user, id) -> roomManager.getRooms().stream().map(Room::getId).toArray(Long[]::new));
+        put(GET_ALL_USERS, (user, id) -> roomManager.getUsers().parallelStream().map(User::getId)
+                .map(Integer::longValue).toArray(Long[]::new));
         put(DEFAULT, (user, id) -> new Long[]{-1L});
     }};
 
@@ -77,7 +79,7 @@ public class Service {
                 Long[] roomId = method.execute(user, getRoomId(requestTo));
 
                 JsonProtocol<Long[]> reply = new JsonProtocol<>(TO_USER, roomId);
-                reply.setFrom("roomManager");
+                reply.setFrom("roomManager:" + roomId[0]);
                 reply.setTo(String.valueOf(user.getId()));
 
                 responder.send(reply.toString());

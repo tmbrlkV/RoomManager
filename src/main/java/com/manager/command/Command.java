@@ -14,6 +14,7 @@ public interface Command {
     String REMOVE_USER_FROM_ROOM = "removeUserFromRoom";
     String REMOVE_USER_FROM_ALL_ROOMS = "removeUserFromAllRooms";
     String GET_ALL_ROOMS = "getAllRooms";
+    String GET_ALL_USERS = "getAllUsers";
     String TO_USER = "toUser";
     String DEFAULT = "";
 }

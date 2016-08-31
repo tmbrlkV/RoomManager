@@ -6,6 +6,7 @@ import com.chat.util.json.JsonObjectFactory;
 import com.chat.util.json.JsonProtocol;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.zeromq.ZMQ;
 
@@ -31,7 +32,6 @@ public class ServiceTest {
         JsonProtocol objectFromJson = createRoom();
         assertNotNull(objectFromJson);
         assertEquals("toUser", objectFromJson.getCommand());
-        assertEquals("roomManager", objectFromJson.getFrom());
     }
 
     private JsonProtocol createRoom() throws com.fasterxml.jackson.core.JsonProcessingException {
@@ -49,7 +49,7 @@ public class ServiceTest {
         assertNotNull(jsonCreatedRoom);
 
         JsonProtocol jsonProtocol = new JsonProtocol<>("removeRoom", user);
-        jsonProtocol.setTo("roomManager:" + jsonCreatedRoom.getFrom());
+        jsonProtocol.setTo(jsonCreatedRoom.getFrom());
         jsonProtocol.setFrom(String.valueOf(user.getId()));
 
         requester.send(JsonObjectFactory.getJsonString(jsonProtocol));
@@ -67,7 +67,7 @@ public class ServiceTest {
         JsonProtocol jsonCreatedRoom = createRoom();
         assertNotNull(jsonCreatedRoom);
 
-        User userPek = new User(2, "pek", "pek");
+        User userPek = new User(4, "pek", "");
         updateUser(jsonCreatedRoom, userPek, "addUserToRoom");
 
         updateUser(jsonCreatedRoom, userPek, "removeUserFromRoom");
@@ -76,7 +76,7 @@ public class ServiceTest {
 
     private void updateUser(JsonProtocol jsonCreatedRoom, User userPek, String command) throws com.fasterxml.jackson.core.JsonProcessingException {
         JsonProtocol jsonProtocol = new JsonProtocol<>(command, userPek);
-        jsonProtocol.setTo("roomManager:" + jsonCreatedRoom.getFrom());
+        jsonProtocol.setTo(jsonCreatedRoom.getFrom());
         jsonProtocol.setFrom(String.valueOf(userPek.getId()));
 
         requester.send(JsonObjectFactory.getJsonString(jsonProtocol));
@@ -100,7 +100,7 @@ public class ServiceTest {
         JsonProtocol objectFromJson = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
         assertNotNull(objectFromJson);
         assertEquals(user.getId(), Integer.parseInt(objectFromJson.getTo()));
-        assertEquals("roomManager", objectFromJson.getFrom());
+        assertEquals("roomManager:-1", objectFromJson.getFrom());
     }
 
     @Test
@@ -119,7 +119,7 @@ public class ServiceTest {
         JsonProtocol objectFromJson = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
         assertNotNull(objectFromJson);
         assertEquals(user.getId(), Integer.parseInt(objectFromJson.getTo()));
-        assertEquals("roomManager", objectFromJson.getFrom());
+        assertEquals("roomManager:15000", objectFromJson.getFrom());
     }
 
     @Test
@@ -135,8 +135,30 @@ public class ServiceTest {
         assertEquals(user.getId(), Integer.parseInt(protocol.getTo()));
         System.out.println(Arrays.toString((Long[]) protocol.getAttachment()));
         assertTrue(((Long[]) protocol.getAttachment()).length >= 1);
-
     }
+
+    @Test
+    public void testGetAllUsers() throws Exception {
+        JsonProtocol jsonCreatedRoom = createRoom();
+        User userJek = new User(2, "jek", "");
+        updateUser(jsonCreatedRoom, userJek, "addUserToRoom");
+
+        User userGeg = new User(3, "geg", "");
+        updateUser(jsonCreatedRoom, userGeg, "addUserToRoom");
+
+        JsonProtocol<User> jsonProtocol = new JsonProtocol<>("getAllUsers", user);
+        jsonProtocol.setFrom(String.valueOf(user.getId()));
+        jsonProtocol.setTo(jsonCreatedRoom.getFrom());
+
+        requester.send(jsonProtocol.toString());
+        String response = requester.recvStr();
+        JsonProtocol protocol = JsonObjectFactory.getObjectFromJson(response, JsonProtocol.class);
+
+        assertEquals(user.getId(), Integer.parseInt(protocol.getTo()));
+        System.out.println(Arrays.toString((Long[]) protocol.getAttachment()));
+        assertTrue(((Long[]) protocol.getAttachment()).length >= 1);
+    }
+
 
     @After
     public void clear() {

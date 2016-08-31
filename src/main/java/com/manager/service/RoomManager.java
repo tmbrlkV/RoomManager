@@ -6,22 +6,31 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Instant;
-import java.util.*;
+import java.util.Collections;
+import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class RoomManager {
     private static final Logger logger = LoggerFactory.getLogger(RoomManager.class);
 
-    private List<Room> rooms = new LinkedList<>();
-    private List<User> users = new LinkedList<>();
+    private List<Room> rooms = new CopyOnWriteArrayList<>();
+    private List<User> users = new CopyOnWriteArrayList<>();
     private static Room lobby;
 
     public Room createRoom(User user) {
         Instant now = Instant.now();
         Room room = new Room(now.getEpochSecond() + now.getNano());
         rooms.add(room);
-        users.add(user);
+        addToUsers(user);
         logger.debug("Rooms size: {}.", rooms.size());
         return room;
+    }
+
+    private void addToUsers(User user) {
+        if (!users.contains(user)) {
+            users.add(user);
+        }
     }
 
     public Room createLobby(long roomId) {
@@ -41,22 +50,22 @@ public class RoomManager {
         return Collections.unmodifiableList(users);
     }
 
+    public Room addUserToRoom(User user, long roomId) {
+        Optional<Room> foundRoom = findRoom(roomId);
+        foundRoom.map(room -> {
+            user.setPassword("");
+            room.addUser(user);
+            addToUsers(user);
+            return true;
+        }).orElse(false);
+        logger.debug("Found room: {}", foundRoom);
+        return foundRoom.orElse(new Room(-1L));
+    }
+
     public Room removeRoom(long roomId) {
         Optional<Room> foundRoom = findRoom(roomId);
         foundRoom.map(rooms::remove).orElse(false);
         logger.debug("Found room {}", foundRoom);
-        return foundRoom.orElse(new Room(-1L));
-    }
-
-    public Room addUserToRoom(User user, long roomId) {
-        Optional<Room> foundRoom = findRoom(roomId);
-        foundRoom.map(room -> {
-            System.err.println(user);
-            room.addUser(user);
-            users.add(user);
-            return true;
-        }).orElse(false);
-        logger.debug("Found room: {}", foundRoom);
         return foundRoom.orElse(new Room(-1L));
     }
 

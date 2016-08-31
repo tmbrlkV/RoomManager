@@ -5,14 +5,14 @@ import com.chat.util.entity.User;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 
 public class Room {
     private static final Logger logger = LoggerFactory.getLogger(Room.class);
     private long id;
-    private List<User> users = new ArrayList<>();
+    private List<User> users = new CopyOnWriteArrayList<>();
 
     public Room(long id) {
         this.id = id;
@@ -23,15 +23,18 @@ public class Room {
     }
 
     public boolean addUser(User user) {
-        logger.debug("Trying to add {}", user);
+        user.setPassword("");
+        logger.debug("Trying to add {} to {}", user, users);
+        if (addToUsers(user)) return true;
+        logger.debug("User {} already exists.", user);
+        return false;
+    }
+
+    private boolean addToUsers(User user) {
         if (!users.contains(user)) {
-            logger.debug("Before adding {}", user);
             users.add(user);
-            logger.debug("User {}, {} added.", user.getId(), user.getLogin());
-            logger.debug("{}", this);
             return true;
         }
-        logger.debug("User {} already exists.", user);
         return false;
     }
 

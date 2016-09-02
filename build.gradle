@@ -19,7 +19,7 @@ ext {
 dependencies {
     compile "org.zeromq:jeromq:$jeromq"
     compile "com.fasterxml.jackson.core:jackson-databind:$jackson"
-    compile "edu.test:util.chat:1.0-RELEASE"
+    compile "edu.test:chat-utils:1.0-RELEASE"
 
     compile "org.slf4j:jcl-over-slf4j:$slf4"
     compile "ch.qos.logback:logback-classic:$logback"
